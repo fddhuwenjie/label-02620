@@ -520,6 +520,81 @@ body {
     radial-gradient(ellipse at 50% 100%, rgba(48,209,88,0.1) 0%, transparent 50%);
 }
 
+/* 浮动装饰元素 */
+.login-bg::before,
+.login-bg::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.login-bg::before {
+  width: 300px;
+  height: 300px;
+  top: -100px;
+  right: -50px;
+  background: linear-gradient(135deg, rgba(0,113,227,0.2) 0%, rgba(191,90,242,0.1) 100%);
+  animation-delay: 0s;
+}
+
+.login-bg::after {
+  width: 200px;
+  height: 200px;
+  bottom: -50px;
+  left: -50px;
+  background: linear-gradient(135deg, rgba(48,209,88,0.15) 0%, rgba(0,113,227,0.1) 100%);
+  animation-delay: -3s;
+}
+
+/* 额外装饰层 */
+.login-page::before,
+.login-page::after {
+  content: '';
+  position: absolute;
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  opacity: 0.6;
+  animation: morph 8s ease-in-out infinite;
+}
+
+.login-page::before {
+  width: 150px;
+  height: 150px;
+  top: 20%;
+  left: 10%;
+  background: linear-gradient(45deg, rgba(255,159,10,0.15), rgba(255,69,58,0.1));
+  animation-delay: -2s;
+}
+
+.login-page::after {
+  width: 120px;
+  height: 120px;
+  bottom: 25%;
+  right: 15%;
+  background: linear-gradient(45deg, rgba(94,92,230,0.15), rgba(191,90,242,0.1));
+  animation-delay: -4s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+}
+
+@keyframes morph {
+  0%, 100% {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+    transform: rotate(45deg) scale(1.1);
+  }
+}
+
 .login-card {
   position: relative;
   width: 100%;

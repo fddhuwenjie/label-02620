@@ -10,6 +10,7 @@ from ..models import User
 from ..schemas import Token, UserCreate, UserResponse
 from ..auth import authenticate_user, create_access_token, get_password_hash, get_current_active_user
 from ..config import get_settings
+from ..logger import logger
 
 router = APIRouter(prefix="/api/auth", tags=["认证"])
 settings = get_settings()
@@ -23,6 +24,7 @@ async def login(
     """用户登录"""
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
+        logger.warning(f"登录失败: 用户名 {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误",
@@ -32,6 +34,7 @@ async def login(
         data={"sub": user.username},
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
+    logger.info(f"用户登录成功: {user.username}")
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -40,6 +43,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """用户注册"""
     existing = db.query(User).filter(User.username == user_data.username).first()
     if existing:
+        logger.warning(f"注册失败: 用户名 {user_data.username} 已存在")
         raise HTTPException(status_code=400, detail="用户名已存在")
     
     user = User(
@@ -51,6 +55,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+    logger.info(f"新用户注册: {user.username}")
     return user
 
 

@@ -1,22 +1,45 @@
 """
 服装行业生产数据管理系统 - 主入口
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from .database import engine, Base
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
+from .database import engine, Base, init_tables
 from .models import User
 from .auth import get_password_hash
 from sqlalchemy.orm import Session
 from .routers import auth, materials, suppliers, orders, production, material_usage
+from .logger import logger
 
-# 创建数据库表
-Base.metadata.create_all(bind=engine)
+# 初始化数据库表结构
+init_tables(engine)
 
 app = FastAPI(
     title="服装生产管理系统",
     description="服装行业物料、生产等环节的数据提交记录系统",
     version="1.0.0"
 )
+
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    """全局数据库异常处理"""
+    logger.error(f"数据库错误 [{request.method} {request.url.path}]: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "数据库操作失败，请稍后重试"}
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """全局异常处理"""
+    logger.error(f"未处理异常 [{request.method} {request.url.path}]: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "服务器内部错误"}
+    )
 
 # CORS配置
 app.add_middleware(
@@ -39,6 +62,7 @@ app.include_router(material_usage.router)
 @app.on_event("startup")
 async def startup_event():
     """启动时初始化测试数据"""
+    logger.info("应用启动，开始初始化数据...")
     from .database import SessionLocal
     from .models import Supplier, Material, ProductionOrder, ProductionRecord, MaterialCategory, OrderStatus, ProcessName
     db = SessionLocal()
@@ -53,6 +77,7 @@ async def startup_event():
                 role="admin"
             )
             db.add(admin)
+            logger.info("创建管理员账号: admin")
         
         # 创建测试操作员账号
         operator = db.query(User).filter(User.username == "operator").first()
@@ -64,6 +89,7 @@ async def startup_event():
                 role="operator"
             )
             db.add(operator)
+            logger.info("创建操作员账号: operator")
         
         db.commit()
         
@@ -117,6 +143,10 @@ async def startup_event():
                 db.add_all(records)
                 db.commit()
         
+        logger.info("数据初始化完成")
+    except Exception as e:
+        logger.error(f"数据初始化失败: {e}")
+        db.rollback()
     finally:
         db.close()
 

@@ -91,7 +91,40 @@ npm run dev
 
 - **后端**：Python + FastAPI + SQLAlchemy + MySQL
 - **前端**：React + Vite + React Router
+- **桌面端**：Electron
 - **部署**：Docker + Docker Compose
+
+## 桌面端（Electron）
+
+### 开发模式
+
+```bash
+cd frontend
+npm install
+npm run electron:dev
+```
+
+这会同时启动 Vite 开发服务器和 Electron 窗口，支持热重载。
+
+### 打包发布
+
+```bash
+# 打包当前平台
+npm run electron:build
+
+# 打包后的安装包在 frontend/dist-electron 目录
+```
+
+支持的平台：
+- Windows: `.exe` 安装包 (NSIS)
+- macOS: `.dmg` 安装包
+- Linux: `.AppImage`
+
+### 注意事项
+
+1. 桌面端运行时需要后端服务在 `localhost:8620` 运行
+2. 可以通过 Docker 启动后端，或本地启动
+3. 打包前确保已执行 `npm run build` 构建前端资源
 
 ### 数据库设计
 
@@ -133,3 +166,36 @@ npm run dev
 - `backend/app/config.py` - 配置加载模块，无硬编码默认值
 
 ⚠️ 生产环境部署前，请务必修改 `DB_PASSWORD` 和 `SECRET_KEY`。
+
+## 数据库初始化
+
+### 方式一：Python 脚本（推荐）
+
+```bash
+cd backend
+python -m scripts.init_db
+```
+
+脚本会自动：
+1. 检查 MySQL 服务器连接
+2. 创建数据库（如不存在）
+3. 创建所有表结构
+4. 显示初始化状态
+
+### 方式二：SQL 脚本
+
+```bash
+# 创建表结构
+mysql -u root -p < backend/scripts/init_schema.sql
+
+# 导入初始数据（可选）
+mysql -u root -p < backend/scripts/init_data.sql
+```
+
+### 数据库连接失败排查
+
+如果遇到连接失败，请检查：
+1. MySQL 服务是否已启动
+2. `.env` 文件中的数据库配置是否正确
+3. MySQL 用户是否有创建数据库的权限
+4. 防火墙是否允许数据库端口访问

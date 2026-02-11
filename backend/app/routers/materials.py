@@ -8,6 +8,7 @@ from ..database import get_db
 from ..models import Material, User
 from ..schemas import MaterialCreate, MaterialResponse
 from ..auth import get_current_active_user
+from ..logger import logger
 
 router = APIRouter(prefix="/api/materials", tags=["物料管理"])
 
@@ -20,6 +21,7 @@ async def get_materials(
     current_user: User = Depends(get_current_active_user)
 ):
     """获取物料列表"""
+    logger.info(f"用户 {current_user.username} 查询物料列表")
     return db.query(Material).offset(skip).limit(limit).all()
 
 
@@ -32,12 +34,14 @@ async def create_material(
     """创建物料"""
     existing = db.query(Material).filter(Material.code == material.code).first()
     if existing:
+        logger.warning(f"创建物料失败: 编码 {material.code} 已存在")
         raise HTTPException(status_code=400, detail="物料编码已存在")
     
     db_material = Material(**material.model_dump())
     db.add(db_material)
     db.commit()
     db.refresh(db_material)
+    logger.info(f"用户 {current_user.username} 创建物料: {material.code}")
     return db_material
 
 
@@ -50,6 +54,7 @@ async def get_material(
     """获取单个物料"""
     material = db.query(Material).filter(Material.id == material_id).first()
     if not material:
+        logger.warning(f"物料不存在: ID={material_id}")
         raise HTTPException(status_code=404, detail="物料不存在")
     return material
 
@@ -64,12 +69,14 @@ async def update_material(
     """更新物料"""
     material = db.query(Material).filter(Material.id == material_id).first()
     if not material:
+        logger.warning(f"更新物料失败: ID={material_id} 不存在")
         raise HTTPException(status_code=404, detail="物料不存在")
     
     for key, value in material_data.model_dump().items():
         setattr(material, key, value)
     db.commit()
     db.refresh(material)
+    logger.info(f"用户 {current_user.username} 更新物料: {material.code}")
     return material
 
 
@@ -82,7 +89,10 @@ async def delete_material(
     """删除物料"""
     material = db.query(Material).filter(Material.id == material_id).first()
     if not material:
+        logger.warning(f"删除物料失败: ID={material_id} 不存在")
         raise HTTPException(status_code=404, detail="物料不存在")
+    code = material.code
     db.delete(material)
     db.commit()
+    logger.info(f"用户 {current_user.username} 删除物料: {code}")
     return {"message": "删除成功"}
