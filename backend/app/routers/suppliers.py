@@ -12,15 +12,17 @@ from ..auth import get_current_active_user
 router = APIRouter(prefix="/api/suppliers", tags=["供应商管理"])
 
 
-@router.get("/", response_model=List[SupplierResponse])
+@router.get("/")
 async def get_suppliers(
-    skip: int = 0,
-    limit: int = 100,
+    page: int = 1,
+    page_size: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """获取供应商列表"""
-    return db.query(Supplier).offset(skip).limit(limit).all()
+    """获取供应商列表（分页）"""
+    total = db.query(Supplier).count()
+    items = db.query(Supplier).offset((page - 1) * page_size).limit(page_size).all()
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/", response_model=SupplierResponse)

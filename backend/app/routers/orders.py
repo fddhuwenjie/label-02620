@@ -13,16 +13,18 @@ from ..logger import logger
 router = APIRouter(prefix="/api/orders", tags=["生产订单"])
 
 
-@router.get("/", response_model=List[ProductionOrderResponse])
+@router.get("/")
 async def get_orders(
-    skip: int = 0,
-    limit: int = 100,
+    page: int = 1,
+    page_size: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """获取订单列表"""
+    """获取订单列表（分页）"""
     logger.info(f"用户 {current_user.username} 查询订单列表")
-    return db.query(ProductionOrder).offset(skip).limit(limit).all()
+    total = db.query(ProductionOrder).count()
+    items = db.query(ProductionOrder).offset((page - 1) * page_size).limit(page_size).all()
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/", response_model=ProductionOrderResponse)

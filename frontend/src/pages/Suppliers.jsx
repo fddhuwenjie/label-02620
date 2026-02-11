@@ -1,22 +1,30 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
 import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 import Modal from '../components/Modal'
+import Pagination from '../components/Pagination'
+
+const PAGE_SIZE = 10
 
 export default function Suppliers() {
   const [suppliers, setSuppliers] = useState([])
+  const [total, setTotal] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ code: '', name: '', contact_person: '', phone: '', address: '' })
   const [errors, setErrors] = useState({})
   const { showToast } = useToast()
+  const confirm = useConfirm()
 
-  useEffect(() => { loadSuppliers() }, [])
+  useEffect(() => { loadSuppliers(currentPage) }, [currentPage])
 
-  const loadSuppliers = async () => {
+  const loadSuppliers = async (page) => {
     try {
-      const res = await api.get('/suppliers/')
-      setSuppliers(res.data)
+      const res = await api.get(`/suppliers/?page=${page}&page_size=${PAGE_SIZE}`)
+      setSuppliers(res.data.items)
+      setTotal(res.data.total)
     } catch (err) {
       showToast(err.friendlyMessage || '加载供应商失败', 'error')
     }
@@ -44,7 +52,7 @@ export default function Suppliers() {
         showToast('供应商创建成功')
       }
       closeModal()
-      loadSuppliers()
+      loadSuppliers(currentPage)
     } catch (err) {
       if (err.response?.status === 400) setErrors({ code: '供应商编码已存在' })
       else showToast(err.friendlyMessage || '操作失败', 'error')
@@ -52,24 +60,19 @@ export default function Suppliers() {
   }
 
   const handleEdit = (s) => {
-    setForm({
-      code: s.code,
-      name: s.name,
-      contact_person: s.contact_person || '',
-      phone: s.phone || '',
-      address: s.address || ''
-    })
+    setForm({ code: s.code, name: s.name, contact_person: s.contact_person || '', phone: s.phone || '', address: s.address || '' })
     setEditingId(s.id)
     setShowModal(true)
     setErrors({})
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('确定要删除这个供应商吗？')) return
+    const ok = await confirm('确定要删除这个供应商吗？')
+    if (!ok) return
     try {
       await api.delete(`/suppliers/${id}`)
       showToast('供应商删除成功')
-      loadSuppliers()
+      loadSuppliers(currentPage)
     } catch (err) {
       if (err.response?.data?.detail?.includes('关联')) {
         showToast('删除失败，该供应商有关联的物料', 'error')
@@ -79,18 +82,8 @@ export default function Suppliers() {
     }
   }
 
-  const openModal = () => {
-    setForm({ code: '', name: '', contact_person: '', phone: '', address: '' })
-    setEditingId(null)
-    setErrors({})
-    setShowModal(true)
-  }
-
-  const closeModal = () => {
-    setShowModal(false)
-    setEditingId(null)
-    setErrors({})
-  }
+  const openModal = () => { setForm({ code: '', name: '', contact_person: '', phone: '', address: '' }); setEditingId(null); setErrors({}); setShowModal(true) }
+  const closeModal = () => { setShowModal(false); setEditingId(null); setErrors({}) }
 
   return (
     <div className="main-content fade-in">
@@ -101,35 +94,33 @@ export default function Suppliers() {
         </div>
         <div className="card-body">
           {suppliers.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">🏢</div>
-              <p className="empty-state-text">暂无供应商数据</p>
-            </div>
+            <div className="empty-state"><div className="empty-state-icon">🏢</div><p className="empty-state-text">暂无供应商数据</p></div>
           ) : (
-            <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr><th>编码</th><th>名称</th><th>联系人</th><th>电话</th><th>地址</th><th>操作</th></tr>
-                </thead>
-                <tbody>
-                  {suppliers.map(s => (
-                    <tr key={s.id}>
-                      <td style={{ fontWeight: '500' }}>{s.code}</td>
-                      <td>{s.name}</td>
-                      <td>{s.contact_person || '-'}</td>
-                      <td>{s.phone || '-'}</td>
-                      <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.address || '-'}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <button className="btn btn-ghost btn-sm" onClick={() => handleEdit(s)}>编辑</button>
-                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(s.id)}>删除</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <div className="table-container">
+                <table className="table">
+                  <thead><tr><th>编码</th><th>名称</th><th>联系人</th><th>电话</th><th>地址</th><th>操作</th></tr></thead>
+                  <tbody>
+                    {suppliers.map(s => (
+                      <tr key={s.id}>
+                        <td style={{ fontWeight: '500' }}>{s.code}</td>
+                        <td>{s.name}</td>
+                        <td>{s.contact_person || '-'}</td>
+                        <td>{s.phone || '-'}</td>
+                        <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.address || '-'}</td>
+                        <td>
+                          <div className="action-buttons">
+                            <button className="btn btn-ghost btn-sm" onClick={() => handleEdit(s)}>编辑</button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(s.id)}>删除</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination current={currentPage} total={total} pageSize={PAGE_SIZE} onChange={setCurrentPage} />
+            </>
           )}
         </div>
       </div>

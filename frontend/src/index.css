@@ -71,8 +71,11 @@ body {
 .app-container {
   height: 100%;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
+
+/* Top Bar - removed */
 
 .main-content {
   flex: 1;
@@ -223,6 +226,26 @@ body {
 .nav-user-role {
   font-size: 12px;
   color: var(--text-tertiary);
+}
+
+.nav-logout {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.nav-logout:hover {
+  background: rgba(255, 69, 58, 0.15);
 }
 
 /* Cards */
@@ -945,4 +968,97 @@ body {
 .toast-warning {
   background: rgba(255, 214, 10, 0.95);
   color: #1d1d1f;
+}
+
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.pagination-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  border-color: var(--primary);
+}
+
+.pagination-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+  color: var(--text-tertiary);
+  padding: 0 4px;
+}
+
+.pagination-info {
+  margin-left: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+
+/* Confirm Dialog */
+.confirm-dialog {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  animation: modalSlideIn 0.3s ease;
+}
+
+.confirm-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.confirm-message {
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #ff5f52;
 }

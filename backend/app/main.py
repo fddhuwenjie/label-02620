@@ -41,10 +41,12 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "服务器内部错误"}
     )
 
-# CORS配置
+# CORS配置 - 从环境变量读取允许的来源
+import os
+allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -12,19 +12,21 @@ from ..auth import get_current_active_user
 router = APIRouter(prefix="/api/production", tags=["生产记录"])
 
 
-@router.get("/", response_model=List[ProductionRecordResponse])
+@router.get("/")
 async def get_records(
     order_id: int = None,
-    skip: int = 0,
-    limit: int = 100,
+    page: int = 1,
+    page_size: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """获取生产记录列表"""
+    """获取生产记录列表（分页）"""
     query = db.query(ProductionRecord)
     if order_id:
         query = query.filter(ProductionRecord.order_id == order_id)
-    return query.offset(skip).limit(limit).all()
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/", response_model=ProductionRecordResponse)

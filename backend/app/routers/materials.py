@@ -13,16 +13,18 @@ from ..logger import logger
 router = APIRouter(prefix="/api/materials", tags=["物料管理"])
 
 
-@router.get("/", response_model=List[MaterialResponse])
+@router.get("/")
 async def get_materials(
-    skip: int = 0,
-    limit: int = 100,
+    page: int = 1,
+    page_size: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """获取物料列表"""
+    """获取物料列表（分页）"""
     logger.info(f"用户 {current_user.username} 查询物料列表")
-    return db.query(Material).offset(skip).limit(limit).all()
+    total = db.query(Material).count()
+    items = db.query(Material).offset((page - 1) * page_size).limit(page_size).all()
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/", response_model=MaterialResponse)

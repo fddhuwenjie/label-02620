@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ToastProvider } from './components/Toast'
+import { ConfirmProvider } from './components/ConfirmDialog'
 import Sidebar from './components/Sidebar'
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -16,16 +17,18 @@ function PrivateRoute({ children }) {
 export default function App() {
   return (
     <ToastProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-          <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
-          <Route path="/materials" element={<PrivateRoute><Materials /></PrivateRoute>} />
-          <Route path="/suppliers" element={<PrivateRoute><Suppliers /></PrivateRoute>} />
-          <Route path="/production" element={<PrivateRoute><Production /></PrivateRoute>} />
-        </Routes>
-      </BrowserRouter>
+      <ConfirmProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+            <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
+            <Route path="/materials" element={<PrivateRoute><Materials /></PrivateRoute>} />
+            <Route path="/suppliers" element={<PrivateRoute><Suppliers /></PrivateRoute>} />
+            <Route path="/production" element={<PrivateRoute><Production /></PrivateRoute>} />
+          </Routes>
+        </BrowserRouter>
+      </ConfirmProvider>
     </ToastProvider>
   )
 }

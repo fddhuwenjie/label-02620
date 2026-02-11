@@ -1,22 +1,30 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
 import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 import Modal from '../components/Modal'
+import Pagination from '../components/Pagination'
+
+const PAGE_SIZE = 10
 
 export default function Materials() {
   const [materials, setMaterials] = useState([])
+  const [total, setTotal] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ code: '', name: '', category: 'fabric', unit: '米', stock_quantity: '', price: '', color: '' })
   const [errors, setErrors] = useState({})
   const { showToast } = useToast()
+  const confirm = useConfirm()
 
-  useEffect(() => { loadMaterials() }, [])
+  useEffect(() => { loadMaterials(currentPage) }, [currentPage])
 
-  const loadMaterials = async () => {
+  const loadMaterials = async (page) => {
     try {
-      const res = await api.get('/materials/')
-      setMaterials(res.data)
+      const res = await api.get(`/materials/?page=${page}&page_size=${PAGE_SIZE}`)
+      setMaterials(res.data.items)
+      setTotal(res.data.total)
     } catch (err) {
       showToast(err.friendlyMessage || '加载物料失败', 'error')
     }
@@ -46,7 +54,7 @@ export default function Materials() {
         showToast('物料创建成功')
       }
       closeModal()
-      loadMaterials()
+      loadMaterials(currentPage)
     } catch (err) {
       if (err.response?.status === 400) setErrors({ code: '物料编码已存在' })
       else showToast(err.friendlyMessage || '操作失败', 'error')
@@ -54,44 +62,26 @@ export default function Materials() {
   }
 
   const handleEdit = (m) => {
-    setForm({
-      code: m.code,
-      name: m.name,
-      category: m.category,
-      unit: m.unit,
-      stock_quantity: m.stock_quantity.toString(),
-      price: m.price?.toString() || '',
-      color: m.color || ''
-    })
+    setForm({ code: m.code, name: m.name, category: m.category, unit: m.unit, stock_quantity: m.stock_quantity.toString(), price: m.price?.toString() || '', color: m.color || '' })
     setEditingId(m.id)
     setShowModal(true)
     setErrors({})
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('确定要删除这条物料吗？')) return
+    const ok = await confirm('确定要删除这条物料吗？')
+    if (!ok) return
     try {
       await api.delete(`/materials/${id}`)
       showToast('物料删除成功')
-      loadMaterials()
+      loadMaterials(currentPage)
     } catch (err) {
       showToast(err.friendlyMessage || '删除失败', 'error')
     }
   }
 
-  const openModal = () => {
-    setForm({ code: '', name: '', category: 'fabric', unit: '米', stock_quantity: '', price: '', color: '' })
-    setEditingId(null)
-    setErrors({})
-    setShowModal(true)
-  }
-
-  const closeModal = () => {
-    setShowModal(false)
-    setEditingId(null)
-    setErrors({})
-  }
-
+  const openModal = () => { setForm({ code: '', name: '', category: 'fabric', unit: '米', stock_quantity: '', price: '', color: '' }); setEditingId(null); setErrors({}); setShowModal(true) }
+  const closeModal = () => { setShowModal(false); setEditingId(null); setErrors({}) }
   const categoryMap = { fabric: '面料', accessory: '辅料', packaging: '包装材料' }
 
   return (
@@ -103,37 +93,35 @@ export default function Materials() {
         </div>
         <div className="card-body">
           {materials.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">📦</div>
-              <p className="empty-state-text">暂无物料数据</p>
-            </div>
+            <div className="empty-state"><div className="empty-state-icon">📦</div><p className="empty-state-text">暂无物料数据</p></div>
           ) : (
-            <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr><th>编码</th><th>名称</th><th>类别</th><th>颜色</th><th>库存</th><th>单位</th><th>单价</th><th>操作</th></tr>
-                </thead>
-                <tbody>
-                  {materials.map(m => (
-                    <tr key={m.id}>
-                      <td style={{ fontWeight: '500' }}>{m.code}</td>
-                      <td>{m.name}</td>
-                      <td>{categoryMap[m.category]}</td>
-                      <td>{m.color || '-'}</td>
-                      <td style={{ color: m.stock_quantity <= m.min_stock ? 'var(--danger)' : 'inherit' }}>{m.stock_quantity.toLocaleString()}</td>
-                      <td>{m.unit}</td>
-                      <td>¥{m.price?.toFixed(2) || '0.00'}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <button className="btn btn-ghost btn-sm" onClick={() => handleEdit(m)}>编辑</button>
-                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(m.id)}>删除</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <div className="table-container">
+                <table className="table">
+                  <thead><tr><th>编码</th><th>名称</th><th>类别</th><th>颜色</th><th>库存</th><th>单位</th><th>单价</th><th>操作</th></tr></thead>
+                  <tbody>
+                    {materials.map(m => (
+                      <tr key={m.id}>
+                        <td style={{ fontWeight: '500' }}>{m.code}</td>
+                        <td>{m.name}</td>
+                        <td>{categoryMap[m.category]}</td>
+                        <td>{m.color || '-'}</td>
+                        <td style={{ color: m.stock_quantity <= m.min_stock ? 'var(--danger)' : 'inherit' }}>{m.stock_quantity.toLocaleString()}</td>
+                        <td>{m.unit}</td>
+                        <td>¥{m.price?.toFixed(2) || '0.00'}</td>
+                        <td>
+                          <div className="action-buttons">
+                            <button className="btn btn-ghost btn-sm" onClick={() => handleEdit(m)}>编辑</button>
+                            <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(m.id)}>删除</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination current={currentPage} total={total} pageSize={PAGE_SIZE} onChange={setCurrentPage} />
+            </>
           )}
         </div>
       </div>
@@ -154,9 +142,7 @@ export default function Materials() {
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">类别</label>
               <select className="form-input form-select" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
-                <option value="fabric">面料</option>
-                <option value="accessory">辅料</option>
-                <option value="packaging">包装材料</option>
+                <option value="fabric">面料</option><option value="accessory">辅料</option><option value="packaging">包装材料</option>
               </select>
             </div>
             <div className="form-group" style={{ margin: 0 }}>

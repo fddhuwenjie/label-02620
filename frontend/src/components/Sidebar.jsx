@@ -56,7 +56,7 @@ export default function Sidebar() {
               <div className="nav-user-name">{user?.full_name || '用户'}</div>
               <div className="nav-user-role">{roleMap[user?.role] || '操作员'}</div>
             </div>
-            <button onClick={logout} className="btn btn-ghost btn-icon" title="退出登录">⏻</button>
+            <button onClick={logout} className="nav-logout" title="退出登录">⏻</button>
           </div>
         </div>
       </aside>

@@ -1,26 +1,34 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
 import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 import Modal from '../components/Modal'
+import Pagination from '../components/Pagination'
+
+const PAGE_SIZE = 10
 
 export default function Production() {
   const [records, setRecords] = useState([])
+  const [total, setTotal] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
   const [orders, setOrders] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ order_id: '', process_name: 'cutting', quantity_completed: '', quantity_defective: '0', work_station: '' })
   const [errors, setErrors] = useState({})
   const { showToast } = useToast()
+  const confirm = useConfirm()
 
   useEffect(() => {
-    loadRecords()
-    api.get('/orders/').then(res => setOrders(res.data)).catch(err => console.error('加载订单列表失败:', err.friendlyMessage))
-  }, [])
+    loadRecords(currentPage)
+    api.get('/orders/?page=1&page_size=1000').then(res => setOrders(res.data.items)).catch(err => console.error('加载订单列表失败:', err.friendlyMessage))
+  }, [currentPage])
 
-  const loadRecords = async () => {
+  const loadRecords = async (page) => {
     try {
-      const res = await api.get('/production/')
-      setRecords(res.data)
+      const res = await api.get(`/production/?page=${page}&page_size=${PAGE_SIZE}`)
+      setRecords(res.data.items)
+      setTotal(res.data.total)
     } catch (err) {
       showToast(err.friendlyMessage || '加载生产记录失败', 'error')
     }
@@ -42,7 +50,7 @@ export default function Production() {
       const data = { ...form, order_id: parseInt(form.order_id), quantity_completed: parseInt(form.quantity_completed), quantity_defective: parseInt(form.quantity_defective) }
       if (editingId) { await api.put(`/production/${editingId}`, data); showToast('生产记录更新成功') }
       else { await api.post('/production/', data); showToast('生产记录创建成功') }
-      closeModal(); loadRecords()
+      closeModal(); loadRecords(currentPage)
     } catch (err) { showToast(err.friendlyMessage || '操作失败', 'error') }
   }
 
@@ -52,8 +60,9 @@ export default function Production() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('确定要删除这条生产记录吗？')) return
-    try { await api.delete(`/production/${id}`); showToast('生产记录删除成功'); loadRecords() }
+    const ok = await confirm('确定要删除这条生产记录吗？')
+    if (!ok) return
+    try { await api.delete(`/production/${id}`); showToast('生产记录删除成功'); loadRecords(currentPage) }
     catch (err) { showToast(err.friendlyMessage || '删除失败', 'error') }
   }
 
@@ -72,29 +81,32 @@ export default function Production() {
           {records.length === 0 ? (
             <div className="empty-state"><div className="empty-state-icon">⚙️</div><p className="empty-state-text">暂无生产记录</p></div>
           ) : (
-            <div className="table-container">
-              <table className="table">
-                <thead><tr><th>订单ID</th><th>工序</th><th>完成数量</th><th>不良品</th><th>良品率</th><th>工位</th><th>记录时间</th><th>操作</th></tr></thead>
-                <tbody>
-                  {records.map(r => {
-                    const total = r.quantity_completed + r.quantity_defective
-                    const rate = total > 0 ? ((r.quantity_completed / total) * 100).toFixed(1) : '100.0'
-                    return (
-                      <tr key={r.id}>
-                        <td style={{ fontWeight: '500' }}>#{r.order_id}</td>
-                        <td>{processMap[r.process_name]}</td>
-                        <td>{r.quantity_completed.toLocaleString()}</td>
-                        <td style={{ color: r.quantity_defective > 0 ? 'var(--danger)' : 'inherit' }}>{r.quantity_defective}</td>
-                        <td style={{ color: parseFloat(rate) >= 98 ? 'var(--success)' : parseFloat(rate) >= 95 ? 'var(--warning)' : 'var(--danger)' }}>{rate}%</td>
-                        <td>{r.work_station || '-'}</td>
-                        <td style={{ color: 'var(--text-secondary)' }}>{new Date(r.created_at).toLocaleString('zh-CN')}</td>
-                        <td><div className="action-buttons"><button className="btn btn-ghost btn-sm" onClick={() => handleEdit(r)}>编辑</button><button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(r.id)}>删除</button></div></td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <div className="table-container">
+                <table className="table">
+                  <thead><tr><th>订单ID</th><th>工序</th><th>完成数量</th><th>不良品</th><th>良品率</th><th>工位</th><th>记录时间</th><th>操作</th></tr></thead>
+                  <tbody>
+                    {records.map(r => {
+                      const total = r.quantity_completed + r.quantity_defective
+                      const rate = total > 0 ? ((r.quantity_completed / total) * 100).toFixed(1) : '100.0'
+                      return (
+                        <tr key={r.id}>
+                          <td style={{ fontWeight: '500' }}>#{r.order_id}</td>
+                          <td>{processMap[r.process_name]}</td>
+                          <td>{r.quantity_completed.toLocaleString()}</td>
+                          <td style={{ color: r.quantity_defective > 0 ? 'var(--danger)' : 'inherit' }}>{r.quantity_defective}</td>
+                          <td style={{ color: parseFloat(rate) >= 98 ? 'var(--success)' : parseFloat(rate) >= 95 ? 'var(--warning)' : 'var(--danger)' }}>{rate}%</td>
+                          <td>{r.work_station || '-'}</td>
+                          <td style={{ color: 'var(--text-secondary)' }}>{new Date(r.created_at).toLocaleString('zh-CN')}</td>
+                          <td><div className="action-buttons"><button className="btn btn-ghost btn-sm" onClick={() => handleEdit(r)}>编辑</button><button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(r.id)}>删除</button></div></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination current={currentPage} total={total} pageSize={PAGE_SIZE} onChange={setCurrentPage} />
+            </>
           )}
         </div>
       </div>
