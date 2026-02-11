@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  # 配置值请参考 README.md 中的「数据库配置」章节
+  db:
+    image: mysql:8.0
+    container_name: garment_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-12345}
+      MYSQL_DATABASE: ${DB_NAME:-test_DB_2}
+      MYSQL_CHARSET: utf8mb4
+    ports:
+      - "3620:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - garment_network
+
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: garment_backend
+    restart: always
+    environment:
+      - DB_HOST=db
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-12345}
+      - DB_NAME=${DB_NAME:-test_DB_2}
+      - SECRET_KEY=${SECRET_KEY:-your-production-secret-key-change-this}
+    ports:
+      - "8620:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - garment_network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: garment_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - garment_network
+
+volumes:
+  mysql_data:
+
+networks:
+  garment_network:
+    driver: bridge
