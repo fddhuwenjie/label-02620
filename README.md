@@ -20,8 +20,6 @@ docker-compose down
 
 启动后访问：
 - 前端界面：http://localhost:8081
-- 后端 API：http://localhost:8000
-- API 文档：http://localhost:8000/docs
 
 ### 本地启动
 
