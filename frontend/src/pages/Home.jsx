@@ -169,10 +169,6 @@ export default function Home() {
             <div className="action-icon">🏢</div>
             <span>供应商</span>
           </Link>
-          <Link to="/material-usage" className="action-item">
-            <div className="action-icon">📊</div>
-            <span>物料使用</span>
-          </Link>
         </div>
       </div>
     </div>
