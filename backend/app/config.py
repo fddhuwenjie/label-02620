@@ -8,16 +8,15 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    # 数据库配置 - 必须通过环境变量或 .env 文件提供
-    # 配置值请参考 README.md 中的「数据库配置」章节
-    DB_HOST: str
+    # 数据库配置 - 默认连接内网服务器
+    DB_HOST: str = "192.168.1.26"
     DB_PORT: int = 3306
-    DB_USER: str
-    DB_PASSWORD: str
-    DB_NAME: str
+    DB_USER: str = "root"
+    DB_PASSWORD: str = "12345"
+    DB_NAME: str = "test_DB_2"
     
-    # JWT配置 - 必须通过环境变量或 .env 文件提供
-    SECRET_KEY: str
+    # JWT配置
+    SECRET_KEY: str = "garment-production-secret-key-2024"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
