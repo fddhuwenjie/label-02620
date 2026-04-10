@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useToast } from '../components/Toast'
 
@@ -12,12 +12,20 @@ const STATUS_MAP = {
 
 export default function Home() {
   const [data, setData] = useState(null)
+  const [alertCount, setAlertCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const { showToast } = useToast()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    api.get('/dashboard/stats')
-      .then(res => setData(res.data))
+    Promise.all([
+      api.get('/dashboard/stats'),
+      api.get('/materials/alerts/count')
+    ])
+      .then(([statsRes, alertsRes]) => {
+        setData(statsRes.data)
+        setAlertCount(alertsRes.data.count)
+      })
       .catch(err => showToast(err.friendlyMessage || '加载数据失败', 'error'))
       .finally(() => setLoading(false))
   }, [])
@@ -71,6 +79,21 @@ export default function Home() {
           <div className="metric-content">
             <div className="metric-value">{overview?.total_materials || 0}</div>
             <div className="metric-label">物料种类</div>
+          </div>
+        </div>
+        
+        <div 
+          className="metric-card metric-red" 
+          onClick={() => navigate('/stock-alerts')} 
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="metric-icon">⚠️</div>
+          <div className="metric-content">
+            <div className="metric-value">{alertCount}</div>
+            <div className="metric-label">库存预警</div>
+            <div className="metric-trend">
+              <span className="trend-text">点击查看</span>
+            </div>
           </div>
         </div>
         
