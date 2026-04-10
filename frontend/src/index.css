@@ -1124,6 +1124,9 @@ body {
 .metric-card.metric-green::before { background: var(--success); }
 .metric-card.metric-purple::before { background: #bf5af2; }
 .metric-card.metric-orange::before { background: #ff9f0a; }
+.metric-card.metric-red::before { background: var(--danger); }
+
+.metric-red .metric-icon { background: rgba(255,69,58,0.15); }
 
 .metric-card:hover {
   transform: translateY(-4px);

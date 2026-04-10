@@ -9,7 +9,7 @@ from .database import engine, Base, init_tables
 from .models import User
 from .auth import get_password_hash
 from sqlalchemy.orm import Session
-from .routers import auth, materials, suppliers, orders, production, material_usage, dashboard
+from .routers import auth, materials, suppliers, orders, production, material_usage, dashboard, alerts
 from .logger import logger
 
 # 初始化数据库表结构
@@ -56,6 +56,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(materials.router)
+app.include_router(alerts.router)
 app.include_router(suppliers.router)
 app.include_router(orders.router)
 app.include_router(production.router)
