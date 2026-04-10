@@ -12,12 +12,19 @@ const STATUS_MAP = {
 
 export default function Home() {
   const [data, setData] = useState(null)
+  const [alertCount, setAlertCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const { showToast } = useToast()
 
   useEffect(() => {
-    api.get('/dashboard/stats')
-      .then(res => setData(res.data))
+    Promise.all([
+      api.get('/dashboard/stats'),
+      api.get('/materials/alerts/count')
+    ])
+      .then(([statsRes, alertsRes]) => {
+        setData(statsRes.data)
+        setAlertCount(alertsRes.data.count)
+      })
       .catch(err => showToast(err.friendlyMessage || '加载数据失败', 'error'))
       .finally(() => setLoading(false))
   }, [])
@@ -95,6 +102,19 @@ export default function Home() {
             </div>
           </div>
         </div>
+        
+        <Link to="/stock-alert" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="metric-card metric-red" style={{ cursor: 'pointer' }}>
+            <div className="metric-icon">⚠️</div>
+            <div className="metric-content">
+              <div className="metric-value">{alertCount}</div>
+              <div className="metric-label">库存预警</div>
+              <div className="metric-trend">
+                <span className="trend-text">点击查看</span>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* 订单状态概览 */}

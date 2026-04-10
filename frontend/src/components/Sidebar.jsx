@@ -45,6 +45,7 @@ export default function Sidebar() {
             <div className="nav-section-title">资源管理</div>
             <ul className="nav-links">
               <li><Link to="/materials" className={isActive('/materials')}><span className="nav-icon">📦</span>物料管理</Link></li>
+              <li><Link to="/stock-alert" className={isActive('/stock-alert')}><span className="nav-icon">⚠️</span>库存预警</Link></li>
               <li><Link to="/suppliers" className={isActive('/suppliers')}><span className="nav-icon">🏢</span>供应商</Link></li>
             </ul>
           </div>
@@ -65,6 +66,7 @@ export default function Sidebar() {
           <li><Link to="/" className={isActive('/')}><span className="nav-icon">🏠</span>首页</Link></li>
           <li><Link to="/orders" className={isActive('/orders')}><span className="nav-icon">📋</span>订单</Link></li>
           <li><Link to="/materials" className={isActive('/materials')}><span className="nav-icon">📦</span>物料</Link></li>
+          <li><Link to="/stock-alert" className={isActive('/stock-alert')}><span className="nav-icon">⚠️</span>预警</Link></li>
           <li><Link to="/suppliers" className={isActive('/suppliers')}><span className="nav-icon">🏢</span>供应商</Link></li>
           <li><Link to="/production" className={isActive('/production')}><span className="nav-icon">⚙️</span>生产</Link></li>
         </ul>

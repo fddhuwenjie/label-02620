@@ -8,6 +8,8 @@ import Orders from './pages/Orders'
 import Materials from './pages/Materials'
 import Suppliers from './pages/Suppliers'
 import Production from './pages/Production'
+import StockAlert from './pages/StockAlert'
+import MaterialUsage from './pages/MaterialUsage'
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('token')
@@ -26,6 +28,8 @@ export default function App() {
             <Route path="/materials" element={<PrivateRoute><Materials /></PrivateRoute>} />
             <Route path="/suppliers" element={<PrivateRoute><Suppliers /></PrivateRoute>} />
             <Route path="/production" element={<PrivateRoute><Production /></PrivateRoute>} />
+            <Route path="/material-usage" element={<PrivateRoute><MaterialUsage /></PrivateRoute>} />
+            <Route path="/stock-alert" element={<PrivateRoute><StockAlert /></PrivateRoute>} />
           </Routes>
         </BrowserRouter>
       </ConfirmProvider>
